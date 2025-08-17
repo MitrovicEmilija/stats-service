@@ -16,7 +16,7 @@ print("🔒 Flask JWT secret:", repr(app.config["JWT_SECRET_KEY"]))
 def get_global_nutrition_info():
     try:
         # For demo: using static food item
-        query = "apple"
+        query = "1lb brisket and fries"
         api_url = f"https://api.api-ninjas.com/v1/nutrition?query={query}"
 
         response = requests.get(api_url, headers={
