@@ -2,7 +2,6 @@ import requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from config import Config
-from models import db
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3006"], supports_credentials=True)
@@ -11,7 +10,7 @@ app.config["JWT_ALGORITHM"] = "HS512"
 print("🔑 Loaded JWT_SECRET_KEY:", app.config["JWT_SECRET_KEY"])
 print("🔒 Flask JWT secret:", repr(app.config["JWT_SECRET_KEY"]))
 
-db.init_app(app)
+#db.init_app(app)
 
 @app.route('/global-nutrition-info', methods=['GET'])
 def get_global_nutrition_info():
