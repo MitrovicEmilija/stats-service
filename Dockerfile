@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Start the app
-CMD ["python", "stats_service.py"]
+CMD ["python", "app.py"]
