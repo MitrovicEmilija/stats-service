@@ -15,19 +15,19 @@ db.init_app(app)
 
 @app.route('/stats/<int:user_id>', methods=['GET'])
 def get_stats(user_id):
-    with app.app_context():
-        avg_weight = db.session.query(func.avg(Progress.weight)) \
-            .filter(Progress.user_id == user_id, Progress.weight != None).scalar()
+    avg_weight = db.session.query(func.avg(Progress.Progress.weight)).scalar() \
+        .filter(Progress.Progress.user_id == user_id, Progress.Progress.weight is not None).scalar()
 
-        avg_sleep = db.session.query(func.avg(Progress.sleep_hours)) \
-            .filter(Progress.user_id == user_id, Progress.sleep_hours != None).scalar()
+    avg_sleep = db.session.query(func.avg(Progress.Progress.sleep_hours)) \
+        .filter(Progress.Progress.user_id == user_id, Progress.Progress.sleep_hours is not None).scalar()
 
-        stats = {
-            "userId": user_id,
-            "average_weight": round(avg_weight, 2) if avg_weight else None,
-            "average_sleep": round(avg_sleep, 2) if avg_sleep else None
-        }
-        return jsonify(stats)
+    stats = {
+        "userId": user_id,
+        "average_weight": round(avg_weight, 2) if avg_weight else None,
+        "average_sleep": round(avg_sleep, 2) if avg_sleep else None
+    }
+    return jsonify(stats)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
