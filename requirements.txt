@@ -6,3 +6,4 @@ pymysql
 
 fastapi~=0.115.0
 sqlalchemy~=2.0.41
+requests~=2.32.3
