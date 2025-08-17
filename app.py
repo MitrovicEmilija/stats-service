@@ -1,8 +1,8 @@
+import requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from config import Config
-from models import db, Progress
-from sqlalchemy import func
+from models import db
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3006"], supports_credentials=True)
@@ -13,20 +13,38 @@ print("🔒 Flask JWT secret:", repr(app.config["JWT_SECRET_KEY"]))
 
 db.init_app(app)
 
-@app.route('/stats/<int:user_id>', methods=['GET'])
-def get_stats(user_id):
-    avg_weight = db.session.query(func.avg(Progress.Progress.weight)).scalar() \
-        .filter(Progress.Progress.user_id == user_id, Progress.Progress.weight is not None).scalar()
+@app.route('/global-nutrition-info', methods=['GET'])
+def get_global_nutrition_info():
+    try:
+        # For demo: using static food item
+        query = "apple"
+        api_url = f"https://api.api-ninjas.com/v1/nutrition?query={query}"
 
-    avg_sleep = db.session.query(func.avg(Progress.Progress.sleep_hours)) \
-        .filter(Progress.Progress.user_id == user_id, Progress.Progress.sleep_hours is not None).scalar()
+        response = requests.get(api_url, headers={
+            "X-Api-Key": "zP+P7AySdHgg0dHEPf105g==OUOeAMxcNSOR0CIn"
+        })
 
-    stats = {
-        "userId": user_id,
-        "average_weight": round(avg_weight, 2) if avg_weight else None,
-        "average_sleep": round(avg_sleep, 2) if avg_sleep else None
-    }
-    return jsonify(stats)
+        if response.status_code != 200:
+            return jsonify({"error": "Failed to fetch nutrition data"}), 500
+
+        data = response.json()
+
+        if not data:
+            return jsonify({"error": "No data received"}), 404
+
+        item = data[0]  # Only using first result
+
+        return jsonify({
+            "name": item["name"],
+            "calories": item["calories"],
+            "protein": item["protein_g"],
+            "carbohydrates": item["carbohydrates_total_g"],
+            "fat": item["fat_total_g"]
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == "__main__":
