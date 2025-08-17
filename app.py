@@ -12,12 +12,11 @@ print("🔒 Flask JWT secret:", repr(app.config["JWT_SECRET_KEY"]))
 
 #db.init_app(app)
 
-@app.route('/global-nutrition-info', methods=['GET'])
+@app.route('/global-exercise-info', methods=['GET'])
 def get_global_nutrition_info():
     try:
-        # For demo: using static food item
-        query = "1lb brisket and fries"
-        api_url = f"https://api.api-ninjas.com/v1/nutrition?query={query}"
+        activity = "skiing"
+        api_url = f"https://api.api-ninjas.com/v1/caloriesburned?activity={activity}"
 
         response = requests.get(api_url, headers={
             "X-Api-Key": "zP+P7AySdHgg0dHEPf105g==OUOeAMxcNSOR0CIn"
