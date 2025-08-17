@@ -26,21 +26,23 @@ def get_global_nutrition_info():
             return jsonify({"error": "Failed to fetch nutrition data"}), 500
 
         data = response.json()
-
         if not data:
             return jsonify({"error": "No data received"}), 404
 
-        item = data[0]  # Only using first result
+        top_results = data[:3]
 
-        return jsonify({
-            "name": item["name"],
-            "calories": item["calories"],
-            "protein": item["protein_g"],
-            "carbohydrates": item["carbohydrates_total_g"],
-            "fat": item["fat_total_g"]
-        })
+        return jsonify([
+            {
+                "name": item["name"],
+                "calories_per_hour": item["calories_per_hour"],
+                "duration_minutes": item["duration_minutes"],
+                "total_calories": item["total_calories"]
+            }
+            for item in top_results
+        ])
 
     except Exception as e:
+        print("❌ Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
