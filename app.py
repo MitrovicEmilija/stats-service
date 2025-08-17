@@ -1,8 +1,8 @@
 import requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from graphene import ObjectType, String, Float, Int, List, Schema
-from flask_graphql import GraphQLView
+from ariadne import QueryType, graphql_sync, make_executable_schema
+from ariadne.explorer import ExplorerGraphiQL
 
 from config import Config
 
@@ -13,42 +13,54 @@ app.config["JWT_ALGORITHM"] = "HS512"
 print("🔑 Loaded JWT_SECRET_KEY:", app.config["JWT_SECRET_KEY"])
 print("🔒 Flask JWT secret:", repr(app.config["JWT_SECRET_KEY"]))
 
-# GraphQL type
-class ExerciseType(ObjectType):
-    name = String()
-    calories_per_hour = Float()
-    duration_minutes = Int()
-    total_calories = Float()
-    
-# Query class
-class Query(ObjectType):
-    top_exercises = List(ExerciseType, activity=String(default_value="skiing"))
+# --- Ariadne GraphQL type definitions ---
+type_defs = """
+    type Exercise {
+        name: String!
+        calories_per_hour: Float!
+        duration_minutes: Int!
+        total_calories: Float!
+    }
 
-    @staticmethod
-    def resolve_top_exercises(self, info, activity):
-        try:
-            url = f"https://api.api-ninjas.com/v1/caloriesburned?activity={activity}"
-            response = requests.get(url, headers={"X-Api-Key": "zP+P7AySdHgg0dHEPf105g==OUOeAMxcNSOR0CIn"})
-            data = response.json()
-            return [
-                {
-                    "name": item["name"],
-                    "calories_per_hour": item["calories_per_hour"],
-                    "duration_minutes": item["duration_minutes"],
-                    "total_calories": item["total_calories"]
-                }
-                for item in data[:3]
-            ]
-        except Exception as e:
-            print("❌ Error:", e)
-            return []
+    type Query {
+        topExercises(activity: String!): [Exercise!]!
+    }
+"""
 
-schema = Schema(query=Query)
+query = QueryType()
 
-# GraphQL route
-app.add_url_rule(
-    "/graphql", view_func=GraphQLView.as_view("graphql", schema=schema, graphiql=True)
-)
+@query.field("topExercises")
+def resolve_top_exercises(_, info, activity):
+    try:
+        url = f"https://api.api-ninjas.com/v1/caloriesburned?activity={activity}"
+        response = requests.get(url, headers={"X-Api-Key": "zP+P7AySdHgg0dHEPf105g==OUOeAMxcNSOR0CIn"})
+        data = response.json()
+        return [
+            {
+                "name": item["name"],
+                "calories_per_hour": item["calories_per_hour"],
+                "duration_minutes": item["duration_minutes"],
+                "total_calories": item["total_calories"]
+            }
+            for item in data[:3]
+        ]
+    except Exception as e:
+        print("❌ Error:", e)
+        return []
+
+schema = make_executable_schema(type_defs, query)
+
+# --- GraphQL playground (GET) ---
+@app.route("/graphql", methods=["GET"])
+def graphql_playground():
+    return ExplorerGraphiQL().html(None), 200
+
+# --- GraphQL query execution (POST) ---
+@app.route("/graphql", methods=["POST"])
+def graphql_server():
+    data = request.get_json()
+    success, result = graphql_sync(schema, data, context_value=request, debug=True)
+    return jsonify(result)
 
 @app.route('/global-exercise-info', methods=['GET'])
 def get_global_nutrition_info():
